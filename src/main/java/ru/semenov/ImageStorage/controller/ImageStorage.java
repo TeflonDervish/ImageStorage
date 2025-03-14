@@ -1,30 +1,20 @@
 package ru.semenov.ImageStorage.controller;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
+import java.util.UUID;
 
 @RestController
-@RequestMapping("/images")
+@RequestMapping("/api/images")
 public class ImageStorage {
 
     @Value("${file.storage}")
@@ -37,31 +27,32 @@ public class ImageStorage {
     @PostMapping("/upload")
     public ResponseEntity<String> update(@RequestParam("file") MultipartFile file) {
         try {
-            String mimeType = file.getContentType();
-            if (mimeType == null || !allowedMimeTypes.contains(mimeType.toLowerCase())) {
-                return ResponseEntity.badRequest().body("Разрешены только изображения (JPEG, PNG, GIF, WEBP).");
+            // Создаем директорию, если она не существует
+            Path uploadPath = Paths.get(folder);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
             }
-            String fileName = file.hashCode() + file.getOriginalFilename();
-            File dest = new File(folder + "\\" + fileName);
-            file.transferTo(dest);
+
+            // Генерируем уникальное имя файла
+            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            Path filePath = uploadPath.resolve(fileName);
+
+            // Сохраняем файл
+            Files.copy(file.getInputStream(), filePath);
+
+            // Возвращаем URL для доступа к файлу
             return ResponseEntity.ok(fileName);
         } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ошибка загрузки файла. " + e);
+            return ResponseEntity.status(500).body("Failed to upload file: " + e.getMessage());
         }
     }
 
     @GetMapping("/{fileName}")
-    public ResponseEntity<InputStreamResource> getImage(@PathVariable String fileName) {
+    public ResponseEntity<byte[]> getImage(@PathVariable String fileName) {
         try {
-            File file = new File(folder + "\\" + fileName);
-            FileInputStream fileInputStream = new FileInputStream(file);
-            InputStreamResource resource = new InputStreamResource(fileInputStream);
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.valueOf(Files.probeContentType(Paths.get(file.getAbsoluteFile().toURI()))));
-            headers.setContentDispositionFormData("inline", fileName);
-            return ResponseEntity.ok()
-                    .header(headers)
-                    .body(resource);
+           Path filePath = Paths.get(folder).resolve(fileName);
+            byte[] imageBytes = Files.readAllBytes(filePath);
+            return ResponseEntity.ok().body(imageBytes);
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
