@@ -29,7 +29,7 @@ public class ImageList {
             // Получаем список всех файлов в директории
             Files.list(uploadPath).forEach(file -> {
                 String fileName = file.getFileName().toString();
-                String fileUrl = "http://localhost:8090/api/images/" + fileName;
+                String fileUrl = "http://212.192.217.207:8090/api/images/" + fileName;
                 imageUrls.add(fileUrl);
             });
 
