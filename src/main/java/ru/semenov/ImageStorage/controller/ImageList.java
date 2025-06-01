@@ -39,7 +39,7 @@ public class ImageList {
             // Получаем список всех файлов в директории
             Files.list(uploadPath).forEach(file -> {
                 String fileName = file.getFileName().toString();
-                String fileUrl = "http://" + url + ":" + port +"/api/images/" + fileName;
+                String fileUrl = "http://" + url + "/api/images/" + fileName;
                 imageUrls.add(fileUrl);
             });
 
