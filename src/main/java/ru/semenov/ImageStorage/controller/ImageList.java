@@ -29,6 +29,11 @@ public class ImageList {
     @Value("${server.port}")
     private String port;
 
+    @GetMapping
+    public String main() {
+        return "redirect:/preview";
+    }
+
     @GetMapping("/preview")
     public String preview(Model model) {
         try {
