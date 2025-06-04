@@ -9,9 +9,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
 
 
 @RestController
@@ -20,10 +17,6 @@ public class ImageStorage {
 
     @Value("${file.storage}")
     private String folder;
-
-    private final List<String> allowedMimeTypes = Arrays.asList(
-            "image/jpeg",
-            "image/png");
 
     @PostMapping("/upload")
     public ResponseEntity<String> update(@RequestParam("file") MultipartFile file) {
@@ -35,7 +28,7 @@ public class ImageStorage {
             }
 
             // Генерируем уникальное имя файла
-            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            String fileName = file.getOriginalFilename();
             Path filePath = uploadPath.resolve(fileName);
 
             // Сохраняем файл
